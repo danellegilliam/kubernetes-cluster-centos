@@ -1,0 +1,26 @@
+---
+- name: Install yum-utils package
+  yum:
+    name:
+      - yum-utils
+    state: latest
+
+- name: Add docker-ce repo
+  shell: "yum-config-manager --add-repo {{ docker_repo_file_url }}"
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install docker packages
+  yum:
+    name:
+      - containerd.io
+      - docker-ce
+      - docker-ce-cli
+    state: latest
+
+- name: Enable and start docker
+  systemd:
+    name: docker
+    enabled: yes
+    masked: no
+    state: started

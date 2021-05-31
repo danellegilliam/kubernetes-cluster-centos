@@ -1,0 +1,6 @@
+[masters]
+master01 ansible_host=10.0.0.10
+
+[nodes]
+node01 ansible_host=10.0.0.11
+node02 ansible_host=10.0.0.12

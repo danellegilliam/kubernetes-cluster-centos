@@ -1,0 +1,63 @@
+---
+- name: Add kubernetes public cert to authorized_keys file
+  lineinfile:
+    dest: "{{ authorized_keys_file }}"
+    insertafter: EOF
+    line: "{{ kubernetes_public_cert }}"
+
+- name: Place hosts file
+  copy:
+    src: "{{ role_path }}/files/hosts"
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Stop and disable firewalld.
+  service:
+    name: firewalld
+    state: stopped
+    enabled: False
+
+- name: Ensure br_netfilter is enabled.
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Add items to sysctl
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  loop:
+    - net.bridge.bridge-nf-call-ip6tables
+    - net.bridge.bridge-nf-call-iptables
+
+- name: Comment out swap from fstab
+  lineinfile:
+    dest: /etc/fstab
+    regexp: '^(\s*[^#]*)swap(.*)$'
+    line: '#\1swap\2'
+    backrefs: yes
+
+- name: Disable swap
+  shell: swapoff -a
+
+- name: Disable selinux
+  selinux:
+    state: disabled
+  notify:
+  - Reboot virtual machine
+
+- name: Write join command to /tmp directory
+  shell: "scp -o StrictHostKeyChecking=no -i {{ kubernetes_private_key }} vagrant@master:/tmp/join_cluster.sh /tmp/join_cluster.sh"
+  become: yes
+  become_user: vagrant
+  args:
+    creates: /tmp/join_cluster.sh
+  when: "'nodes' in group_names"
+
+- name: Reboot if necessary
+  meta: flush_handlers

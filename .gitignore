@@ -1,0 +1,3 @@
+roles/common/files/kubernetes_id_rsa
+roles/common/files/kubernetes_id_rsa.pub
+.vagrant

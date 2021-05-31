@@ -1,0 +1,13 @@
+---
+- name: Download calico yaml
+  ansible.builtin.get_url:
+    url: "{{ calico_yaml_url }}"
+    dest: /home/vagrant/calico.yaml
+    owner: vagrant
+    group: vagrant
+    mode: '0664'
+
+- name: Deploy calicoe yaml files
+  shell: kubectl apply -f /home/vagrant/calico.yaml
+  become: yes
+  become_user: vagrant

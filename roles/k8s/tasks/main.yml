@@ -1,0 +1,65 @@
+---
+- name: Place kubernetes.repo in yum.repos.d directory
+  copy:
+    src: "{{ role_path }}/files/kubernetes.repo"
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install kubernetes package
+  yum:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: latest
+
+- name: Enable and start kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    masked: no
+    state: started
+
+- name: Initialize the cluster
+  shell: kubeadm init --apiserver-advertise-address=10.0.0.10 --pod-network-cidr=10.244.0.0/16 >> cluster_initialized.txt
+  args:
+    chdir: $HOME
+    creates: cluster_initialized.txt
+  become: yes
+  become_user: root
+  when: "'masters' in group_names"
+
+- name: Creates .kube directory
+  file:
+    path: /home/vagrant/.kube
+    state: directory
+    owner: vagrant
+    group: vagrant
+    recurse: yes
+  when: "'masters' in group_names"
+
+- name: Copy config file to .kube directory
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/vagrant/.kube/config
+    owner: vagrant
+    group: vagrant
+    mode: 0644
+    remote_src: yes
+  when: "'masters' in group_names"
+
+- name: Write join command to file
+  shell: kubeadm token create --print-join-command > /tmp/join_cluster.sh
+  become: yes
+  become_user: vagrant
+  args:
+    creates: /tmp/join_cluster.sh
+  when: "'masters' in group_names"
+
+- name: Join worker to kubernetes cluster
+  shell: sh /tmp/join_cluster.sh
+  become: yes
+  become_user: root
+  when: "'nodes' in group_names"

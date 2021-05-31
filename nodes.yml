@@ -1,0 +1,10 @@
+---
+# file: nodes.yml
+- hosts: nodes
+  name: node-playbook
+  gather_facts: False
+  become: true
+  roles:
+    - common
+    - docker
+    - k8s

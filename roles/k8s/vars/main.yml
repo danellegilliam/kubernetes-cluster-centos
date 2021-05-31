@@ -1,0 +1,3 @@
+authorized_keys_file: "/home/vagrant/.ssh/authorized_keys"
+kubernetes_public_cert: "{{ lookup('file', 'files/kubernetes_id_rsa.pub') }}"
+kubernetes_private_key: "{{ role_path }}/files/kubernetes_id_rsa"

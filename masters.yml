@@ -1,0 +1,11 @@
+---
+# file: masters.yml
+- hosts: masters
+  name: master-playbook
+  gather_facts: False
+  become: true
+  roles:
+    - common
+    - docker
+    - k8s
+    - cni
